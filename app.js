@@ -188,8 +188,11 @@ async function refresh() {
     }
     await ensureUSE();
     const enc = await embedText(query);
+
+    // Work only on the category-prefiltered set to reduce noise
+    const baseList = applyCategoryFilter(all);
     // compute cosine similarity
-    const withVecs = await Promise.all(all.map(async e => {
+    const scored = await Promise.all(baseList.map(async e => {
       const baseText = e.text || e.transcript || '';
       if (!baseText) return { e, score: -1 };
       if (!e.embedding) {
@@ -199,11 +202,30 @@ async function refresh() {
       const score = cosine(enc, e.embedding);
       return { e, score };
     }));
-    const ranked = withVecs
-      .filter(x => x.score >= 0)
+
+    // Dynamic thresholding: keep strong matches
+    const valid = scored.filter(s => s.score >= 0);
+    const scores = valid.map(s => s.score);
+    const mean = scores.reduce((a,b)=>a+b,0) / (scores.length || 1);
+    const variance = scores.reduce((a,b)=>a + Math.pow(b-mean,2), 0) / (scores.length || 1);
+    const std = Math.sqrt(variance);
+    const floor = 0.2; // minimum similarity floor
+    const threshold = Math.max(floor, mean + 0.25 * std);
+
+    const topK = 20;
+    const ranked = valid
+      .filter(x => x.score >= threshold)
       .sort((a,b) => b.score - a.score)
+      .slice(0, topK)
       .map(x => x.e);
-    render(applyCategoryFilter(ranked));
+
+    // If threshold filtered out everything, fall back to topK regardless
+    if (ranked.length === 0) {
+      const fallback = valid.sort((a,b) => b.score - a.score).slice(0, topK).map(x=>x.e);
+      render(fallback);
+    } else {
+      render(ranked);
+    }
   }
   } catch (err) {
     console.error('Refresh error', err);
