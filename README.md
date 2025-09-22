@@ -1,10 +1,15 @@
-# Whimsy — Tiny Journal for Fleeting Thoughts (MVP)
+Name: Cindy Zhu
+Github: @cindyzhuu
+URL: https://peaceful-kheer-cbb77b.netlify.app/
+PRD: https://docs.google.com/document/d/1nNX6mI4i-YOOCPmL9tHF9bsjQs3fS574rfZ0-T07gkU/edit?usp=sharing
 
-Whimsy is a minimal, private-first journaling app for people who are afraid of forgetting their thoughts and ideas but don’t want the heaviness of traditional tools. It emphasizes a joyful, low-friction capture flow and a playful archive (like a memory box) where you can revisit old notes.
+# Memento — Tiny Journal for Fleeting Thoughts (MVP)
+
+Memento is a minimal, private-first journaling app for people who are afraid of forgetting their thoughts and ideas but don’t want the heaviness of traditional tools. It emphasizes a joyful, low-friction capture flow and a playful archive (like a memory box) where you can revisit old notes.
 
 - Fast capture: jot text or record audio in seconds.
 - Playful archive: browse your “Memory Box” of notes and snippets.
-- Powerful search: exact search built-in, optional on-device semantic search.
+- Powerful search: exact search built-in, optional on-device semantic search (semantic still is not completely functional yet).
 - Optional transcription: toggle on if your device supports it.
 - Export anytime: your data, your device. No ads, no analytics.
 
@@ -35,21 +40,6 @@ Whimsy is a minimal, private-first journaling app for people who are afraid of f
   - Exact: case-insensitive substring match over text/transcripts
   - Semantic: lazy-loads TensorFlow.js and Universal Sentence Encoder, computes cosine similarity on-device
 - Export: Lazy-loads JSZip from CDN, bundles text and audio into a ZIP with `manifest.json` metadata.
-
-## Run Locally
-
-Because microphone permissions and some APIs behave better over http(s), a local server is recommended.
-
-```bash
-# From the project root
-python -m http.server 8000
-# or
-npx http-server -p 8000
-```
-
-Open: http://localhost:8000
-
-When prompted by your browser, allow microphone access to use audio recording.
 
 ## File Structure
 

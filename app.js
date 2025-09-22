@@ -1,4 +1,4 @@
-// Whimsy - Minimal Journal MVP
+// Memento - Minimal Journal MVP
 // Privacy-first, offline-capable, IndexedDB storage
 
 const $ = (sel) => document.querySelector(sel);
@@ -345,7 +345,7 @@ async function exportAll() {
   const blob = await zip.generateAsync({ type: 'blob' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = url; a.download = 'whimsy-export.zip';
+  a.href = url; a.download = 'memento-export.zip';
   document.body.appendChild(a); a.click(); a.remove();
   URL.revokeObjectURL(url);
 }
