@@ -76,10 +76,10 @@ function render(entries) {
   const empty = $('#emptyState');
   entriesEl.innerHTML = '';
   if (!entries || entries.length === 0) {
-    empty.style.display = 'block';
+    if (empty) empty.style.display = 'block';
     return;
   }
-  empty.style.display = 'none';
+  if (empty) empty.style.display = 'none';
   for (const e of entries) {
     const card = document.createElement('div');
     card.className = 'card';
@@ -149,11 +149,14 @@ function renderCategoryFilters(allEntries) {
 }
 
 async function refresh() {
-  const all = await dbGetAll();
-  renderCategoryFilters(all);
-  const query = $('#searchInput').value.trim();
-  const mode = $('#searchMode').value;
-  const filterCats = Array.from(selectedCategories);
+  try {
+    const all = await dbGetAll();
+    renderCategoryFilters(all);
+    const queryInput = $('#searchInput');
+    const modeSel = $('#searchMode');
+    const query = (queryInput?.value || '').trim();
+    const mode = modeSel?.value || 'exact';
+    const filterCats = Array.from(selectedCategories);
 
   const applyCategoryFilter = (list) => {
     if (filterCats.length === 0) return list;
@@ -163,10 +166,10 @@ async function refresh() {
     });
   };
 
-  if (!query) {
-    render(applyCategoryFilter(all));
-    return;
-  }
+    if (!query) {
+      render(applyCategoryFilter(all));
+      return;
+    }
 
   if (mode === 'exact') {
     const q = query.toLowerCase();
@@ -177,7 +180,8 @@ async function refresh() {
     render(applyCategoryFilter(filtered));
   } else {
     // semantic
-    const enabled = $('#semanticToggle').checked;
+    const semToggle = $('#semanticToggle');
+    const enabled = !!semToggle && !!semToggle.checked;
     if (!enabled) {
       render(applyCategoryFilter(all));
       return;
@@ -200,6 +204,9 @@ async function refresh() {
       .sort((a,b) => b.score - a.score)
       .map(x => x.e);
     render(applyCategoryFilter(ranked));
+  }
+  } catch (err) {
+    console.error('Refresh error', err);
   }
 }
 
@@ -325,18 +332,18 @@ async function exportAll() {
 function openSettings() { $('#settingsDialog').showModal(); }
 
 // Event wiring
-$('#saveTextBtn').addEventListener('click', saveText);
-$('#noteInput').addEventListener('keydown', (e) => {
+$('#saveTextBtn')?.addEventListener('click', saveText);
+$('#noteInput')?.addEventListener('keydown', (e) => {
   if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') { e.preventDefault(); saveText(); }
 });
-$('#recordBtn').addEventListener('click', toggleRecord);
-$('#exportBtn').addEventListener('click', exportAll);
-$('#settingsBtn').addEventListener('click', openSettings);
-$('#clearSearch').addEventListener('click', () => { $('#searchInput').value=''; refresh(); });
-$('#searchInput').addEventListener('input', refresh);
-$('#searchMode').addEventListener('change', refresh);
-$('#semanticToggle').addEventListener('change', refresh);
-$('#clearFilters').addEventListener('click', () => { selectedCategories.clear(); refresh(); });
+$('#recordBtn')?.addEventListener('click', toggleRecord);
+$('#exportBtn')?.addEventListener('click', exportAll);
+$('#settingsBtn')?.addEventListener('click', openSettings);
+$('#clearSearch')?.addEventListener('click', () => { const si = $('#searchInput'); if (si) si.value=''; refresh(); });
+$('#searchInput')?.addEventListener('input', refresh);
+$('#searchMode')?.addEventListener('change', refresh);
+$('#semanticToggle')?.addEventListener('change', refresh);
+$('#clearFilters')?.addEventListener('click', () => { selectedCategories.clear(); refresh(); });
 
 function parseCategories(text) {
   return (text || '')
