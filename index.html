@@ -23,6 +23,9 @@
       <section class="composer">
         <h2 class="section-title">Capture</h2>
         <textarea id="noteInput" placeholder="Jot a fleeting thought… (Cmd/Ctrl+Enter to save)"></textarea>
+        <div class="row">
+          <input id="categoryInput" type="text" placeholder="Categories (comma separated, e.g. ideas, dreams, todo)" />
+        </div>
         <div class="controls">
           <button id="saveTextBtn" class="primary">Save Note</button>
           <div class="recording">
@@ -47,6 +50,13 @@
 
       <section class="archive">
         <h2 class="section-title">Memory Box</h2>
+        <div class="filters">
+          <div class="filter-row">
+            <span class="hint">Filter by category:</span>
+            <div id="categoryFilters" class="chips"></div>
+            <button id="clearFilters" class="ghost">Clear Filters</button>
+          </div>
+        </div>
         <div id="emptyState" class="empty">Your memories will appear here. Start by saving a note or recording a thought.</div>
         <div id="entries" class="grid"></div>
       </section>

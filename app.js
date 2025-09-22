@@ -43,9 +43,10 @@ async function dbAdd(entry) {
   const db = await openDB();
   return new Promise((resolve, reject) => {
     const tx = db.transaction(STORE, 'readwrite');
-    tx.oncomplete = () => resolve(result);
-    tx.onerror = () => reject(tx.error);
-    const result = tx.objectStore(STORE).add(entry);
+    const store = tx.objectStore(STORE);
+    const addReq = store.add(entry);
+    addReq.onsuccess = () => resolve(addReq.result);
+    addReq.onerror = () => reject(addReq.error);
   });
 }
 
@@ -64,6 +65,7 @@ let mediaRecorder = null;
 let recordedChunks = [];
 let isRecording = false;
 let useModel = null; // Universal Sentence Encoder model when loaded
+let selectedCategories = new Set();
 
 function formatDate(ts) {
   try { return new Date(ts).toLocaleString(); } catch { return '' }
@@ -105,16 +107,64 @@ function render(entries) {
       }
     }
 
+    if (e.categories && e.categories.length) {
+      const cats = document.createElement('div');
+      cats.className = 'cats';
+      e.categories.forEach(c => {
+        const chip = document.createElement('span');
+        chip.className = 'chip';
+        chip.textContent = c;
+        cats.appendChild(chip);
+      });
+      card.appendChild(cats);
+    }
+
     entriesEl.appendChild(card);
   }
 }
 
+function getUniqueCategories(entries) {
+  const set = new Set();
+  for (const e of entries) (e.categories || []).forEach(c => set.add(c));
+  return Array.from(set).sort();
+}
+
+function renderCategoryFilters(allEntries) {
+  const host = $('#categoryFilters');
+  if (!host) return;
+  host.innerHTML = '';
+  const cats = getUniqueCategories(allEntries);
+  cats.forEach(c => {
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'chip' + (selectedCategories.has(c) ? ' active' : '');
+    chip.textContent = c;
+    chip.addEventListener('click', () => {
+      if (selectedCategories.has(c)) selectedCategories.delete(c); else selectedCategories.add(c);
+      renderCategoryFilters(allEntries);
+      refresh();
+    });
+    host.appendChild(chip);
+  });
+}
+
 async function refresh() {
   const all = await dbGetAll();
+  renderCategoryFilters(all);
   const query = $('#searchInput').value.trim();
   const mode = $('#searchMode').value;
+  const filterCats = Array.from(selectedCategories);
+
+  const applyCategoryFilter = (list) => {
+    if (filterCats.length === 0) return list;
+    return list.filter(e => {
+      const ecs = e.categories || [];
+      return ecs.some(c => filterCats.includes(c));
+    });
+  };
+
   if (!query) {
-    render(all);
+    render(applyCategoryFilter(all));
     return;
   }
 
@@ -124,12 +174,12 @@ async function refresh() {
       const text = (e.text || e.transcript || '').toLowerCase();
       return text.includes(q);
     });
-    render(filtered);
+    render(applyCategoryFilter(filtered));
   } else {
     // semantic
     const enabled = $('#semanticToggle').checked;
     if (!enabled) {
-      render(all);
+      render(applyCategoryFilter(all));
       return;
     }
     await ensureUSE();
@@ -149,7 +199,7 @@ async function refresh() {
       .filter(x => x.score >= 0)
       .sort((a,b) => b.score - a.score)
       .map(x => x.e);
-    render(ranked);
+    render(applyCategoryFilter(ranked));
   }
 }
 
@@ -191,9 +241,12 @@ async function embedText(text) {
 async function saveText() {
   const val = $('#noteInput').value.trim();
   if (!val) return;
-  const entry = { type: 'text', text: val, createdAt: Date.now() };
-  await dbAdd(entry);
+  const cats = parseCategories($('#categoryInput').value);
+  const entry = { type: 'text', text: val, createdAt: Date.now(), categories: cats };
+  const id = await dbAdd(entry);
+  entry.id = id;
   $('#noteInput').value = '';
+  $('#categoryInput').value = '';
   await refresh();
 }
 
@@ -223,7 +276,8 @@ async function toggleRecord() {
 async function onRecordingStop() {
   const blob = new Blob(recordedChunks, { type: 'audio/webm' });
   const arrayBuf = await blob.arrayBuffer();
-  const entry = { type: 'audio', createdAt: Date.now(), audioData: arrayBuf, mimeType: blob.type };
+  const cats = parseCategories($('#categoryInput').value);
+  const entry = { type: 'audio', createdAt: Date.now(), audioData: arrayBuf, mimeType: blob.type, categories: cats };
   const shouldTranscribe = $('#transcriptionToggle').checked && 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window;
   if (shouldTranscribe) {
     try {
@@ -232,7 +286,8 @@ async function onRecordingStop() {
       entry.transcript = '';
     } catch {}
   }
-  await dbAdd(entry);
+  const id = await dbAdd(entry);
+  entry.id = id;
   $('#recordStatus').textContent = 'Saved';
   await refresh();
 }
@@ -281,6 +336,15 @@ $('#clearSearch').addEventListener('click', () => { $('#searchInput').value=''; 
 $('#searchInput').addEventListener('input', refresh);
 $('#searchMode').addEventListener('change', refresh);
 $('#semanticToggle').addEventListener('change', refresh);
+$('#clearFilters').addEventListener('click', () => { selectedCategories.clear(); refresh(); });
+
+function parseCategories(text) {
+  return (text || '')
+    .split(',')
+    .map(s => s.trim())
+    .filter(Boolean)
+    .map(s => s.toLowerCase());
+}
 
 // Initial load
 refresh();
