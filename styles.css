@@ -66,6 +66,17 @@ body {
 .composer #categoryInput { width: 100%; }
 .composer .controls { margin-top: 0; gap: 8px; }
 
+/* Make the search bar compact and centered like the composer */
+.search {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 900px;
+  margin: 0 auto;
+}
+.search .section-title { margin: 0 12px 0 0; font-size: 13px; white-space: nowrap; }
+.search .search-row { flex: 1 1 auto; display: grid; grid-template-columns: 1fr auto auto auto; gap: 8px; }
+
 textarea#noteInput {
   width: 100%; min-height: 140px; resize: vertical; border-radius: 14px; border: 1px solid var(--border);
   background: #ffffff; color: var(--text); padding: 12px; font-size: 16px; outline: none; box-shadow: 0 2px 0 rgba(0,0,0,0.02) inset;
@@ -107,12 +118,13 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
 menu { display: flex; justify-content: flex-end; gap: 8px; padding: 0; margin-top: 8px; }
 
 @media (min-width: 900px) {
-  /* Desktop: composer spans full width on its own row, content below */
+  /* Desktop: single column — Composer, then Search, then Archive */
   .layout {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
     grid-template-areas:
-      "composer composer"
-      "search archive";
+      "composer"
+      "search"
+      "archive";
   }
   .composer { grid-area: composer; }
   .search { grid-area: search; }
