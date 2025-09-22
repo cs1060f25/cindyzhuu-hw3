@@ -46,6 +46,26 @@ body {
   box-shadow: 0 10px 30px rgba(110, 120, 180, 0.18);
 }
 
+/* Make the composer a horizontal, centered bar */
+.composer {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  max-width: 900px;
+  margin: 0 auto;
+  flex-wrap: wrap;
+}
+.composer .section-title { margin: 0 8px 0 0; font-size: 13px; white-space: nowrap; }
+.composer textarea#noteInput {
+  min-height: 48px;
+  max-height: 120px;
+  flex: 1 1 auto;
+}
+.composer .row { display: flex; flex: 0 1 240px; }
+.composer #categoryInput { width: 100%; }
+.composer .controls { margin-top: 0; gap: 8px; }
+
 textarea#noteInput {
   width: 100%; min-height: 140px; resize: vertical; border-radius: 14px; border: 1px solid var(--border);
   background: #ffffff; color: var(--text); padding: 12px; font-size: 16px; outline: none; box-shadow: 0 2px 0 rgba(0,0,0,0.02) inset;
@@ -87,7 +107,13 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
 menu { display: flex; justify-content: flex-end; gap: 8px; padding: 0; margin-top: 8px; }
 
 @media (min-width: 900px) {
-  .layout { grid-template-columns: 420px 1fr; grid-template-areas: "composer search" "composer archive"; }
+  /* Desktop: composer spans full width on its own row, content below */
+  .layout {
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      "composer composer"
+      "search archive";
+  }
   .composer { grid-area: composer; }
   .search { grid-area: search; }
   .archive { grid-area: archive; }
